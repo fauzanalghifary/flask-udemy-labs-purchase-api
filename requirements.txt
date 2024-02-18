@@ -7,3 +7,4 @@ Werkzeug==2.2.2
 flask-sqlalchemy==3.0.2
 marshmallow==3.19.0
 pytest
+pytest-cov
