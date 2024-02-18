@@ -57,17 +57,23 @@ def test_submit_purchase_order_success():
     assert response.json['po_header_id'] is not None
 
 
-def test_submit_purchase_order_failed_string_qty():
+@pytest.mark.parametrize("po_date, vendor_name, quantity, expected_status", [
+    pytest.param("2022-12-01", "Wallmark Wallmark Wallmark Wallmark Wallmark Wallmark", 280, 400,
+                 id="Long vendor name"),
+    pytest.param("2022-12-01", "Wallmark", "280A", 400, id="Alphabet in quantity"),
+    pytest.param("12-01-2022", "Wallmark", 280, 500, id="Wrong date format")
+])
+def test_submit_purchase_order_failed(po_date, vendor_name, quantity, expected_status):
     data = {
-        "po_date": "2022-12-01",
+        "po_date": po_date,
         "po_currency": "USD",
-        "vendor_name": "WallMark",
+        "vendor_name": vendor_name,
         "vendor_email": "alice@wallmark.com",
         "created_by": "procurement-agent-01",
         "po_lines": [
             {
                 "item_name": "Apple",
-                "quantity": "280A",
+                "quantity": quantity,
                 "unit_price": 1,
                 "notes": "Sweet red apple"
             },
@@ -80,59 +86,7 @@ def test_submit_purchase_order_failed_string_qty():
         ]
     }
     response = app.test_client().post('/api/purchase_order', json=data)
-    assert response.status_code == 400
-
-
-def test_submit_purchase_order_failed_vendor_too_long():
-    data = {
-        "po_date": "2022-12-01",
-        "po_currency": "USD",
-        "vendor_name": "WallMark WallMark WallMark WallMark WallMark WallMark",
-        "vendor_email": "alice@wallmark.com",
-        "created_by": "procurement-agent-01",
-        "po_lines": [
-            {
-                "item_name": "Apple",
-                "quantity": 280,
-                "unit_price": 1,
-                "notes": "Sweet red apple"
-            },
-            {
-                "item_name": "Avocado",
-                "quantity": 137,
-                "unit_price": 3,
-                "notes": "Australian avocado"
-            }
-        ]
-    }
-    response = app.test_client().post('/api/purchase_order', json=data)
-    assert response.status_code == 400
-
-
-def test_submit_purchase_order_failed_wrong_date_format():
-    data = {
-        "po_date": "12-01-2022",
-        "po_currency": "USD",
-        "vendor_name": "WallMark",
-        "vendor_email": "alice@wallmark.com",
-        "created_by": "procurement-agent-01",
-        "po_lines": [
-            {
-                "item_name": "Apple",
-                "quantity": 280,
-                "unit_price": 1,
-                "notes": "Sweet red apple"
-            },
-            {
-                "item_name": "Avocado",
-                "quantity": 137,
-                "unit_price": 3,
-                "notes": "Australian avocado"
-            }
-        ]
-    }
-    response = app.test_client().post('/api/purchase_order', json=data)
-    assert response.status_code == 500
+    assert response.status_code == expected_status
 
 
 def test_find_purchase_order_success_po_header(mock_data):
@@ -202,15 +156,12 @@ def test_find_purchase_order_success_all(mock_data):
     assert data2['po_lines'][1]['notes'] in str(get_response.data)
 
 
-def test_find_purchase_order_failed_nonexist_po_header():
-    get_response = app.test_client().get('/api/purchase_order?po_header_id=nonexistpoheader')
+@pytest.mark.parametrize("param_name, param_value, expected_response, expected_length", [
+    pytest.param("po_header_id", "nonexistpoheader", 200, 0, id="Test non-exist po_header_id"),
+    pytest.param("created_by", "nonexistcreatedby", 200, 0, id="Test non-exist created_by"),
+])
+def test_find_purchase_order_failed(param_name, param_value, expected_response, expected_length):
+    get_response = app.test_client().get('/api/purchase_order?' + str(param_name) + '=' + str(param_value))
 
-    assert get_response.status_code == 200
-    assert len(json.loads(get_response.data)) == 0
-
-
-def test_find_purchase_order_failed_nonexist_created_by():
-    get_response = app.test_client().get('/api/purchase_order?created_by=nonexistcreatedby')
-
-    assert get_response.status_code == 200
-    assert len(json.loads(get_response.data)) == 0
+    assert get_response.status_code == expected_response
+    assert len(json.loads(get_response.data)) == expected_length
