@@ -1,5 +1,32 @@
 from app import app
 import json
+import pytest
+
+
+@pytest.fixture
+def mock_data():
+    data = {
+        "po_date": "2022-12-02",
+        "po_currency": "USD",
+        "vendor_name": "IKAE",
+        "vendor_email": "wellbert@ikae.com",
+        "created_by": "procurement-agent-02",
+        "po_lines": [
+            {
+                "item_name": "Plywood",
+                "quantity": 200,
+                "unit_price": 10,
+                "notes": "Fine sanding"
+            },
+            {
+                "item_name": "Top Table",
+                "quantity": 40,
+                "unit_price": 10,
+                "notes": "Less glued particle"
+            }
+        ]
+    }
+    return data
 
 
 def test_submit_purchase_order_success():
@@ -108,99 +135,33 @@ def test_submit_purchase_order_failed_wrong_date_format():
     assert response.status_code == 500
 
 
-def test_find_purchase_order_success_po_header():
-    data = {
-        "po_date": "2022-12-02",
-        "po_currency": "USD",
-        "vendor_name": "IKAE",
-        "vendor_email": "wellbert@ikae.com",
-        "created_by": "procurement-agent-02",
-        "po_lines": [
-            {
-                "item_name": "Plywood",
-                "quantity": 200,
-                "unit_price": 10,
-                "notes": "Fine sanding"
-            },
-            {
-                "item_name": "Top Table",
-                "quantity": 40,
-                "unit_price": 10,
-                "notes": "Less glued particle"
-            }
-        ]
-    }
-
-    post_response = app.test_client().post('/api/purchase_order', json=data)
+def test_find_purchase_order_success_po_header(mock_data):
+    post_response = app.test_client().post('/api/purchase_order', json=mock_data)
     get_response = app.test_client().get('/api/purchase_order?po_header_id=' + post_response.json['po_header_id'])
 
     assert get_response.status_code == 200
     assert len(json.loads(get_response.data)) > 0
     assert post_response.json['po_header_id'] in str(get_response.data)
-    assert data['po_lines'][0]['item_name'] in str(get_response.json[0]['po_lines'])
-    assert data['po_lines'][0]['notes'] in str(get_response.json[0]['po_lines'])
-    assert data['po_lines'][1]['item_name'] in str(get_response.json[0]['po_lines'])
-    assert data['po_lines'][1]['notes'] in str(get_response.json[0]['po_lines'])
+    assert mock_data['po_lines'][0]['item_name'] in str(get_response.json[0]['po_lines'])
+    assert mock_data['po_lines'][0]['notes'] in str(get_response.json[0]['po_lines'])
+    assert mock_data['po_lines'][1]['item_name'] in str(get_response.json[0]['po_lines'])
+    assert mock_data['po_lines'][1]['notes'] in str(get_response.json[0]['po_lines'])
 
 
-def test_find_purchase_order_success_created_by():
-    data = {
-        "po_date": "2022-12-02",
-        "po_currency": "USD",
-        "vendor_name": "IKAE",
-        "vendor_email": "wellbert@ikae.com",
-        "created_by": "procurement-agent-02",
-        "po_lines": [
-            {
-                "item_name": "Plywood",
-                "quantity": 200,
-                "unit_price": 10,
-                "notes": "Fine sanding"
-            },
-            {
-                "item_name": "Top Table",
-                "quantity": 40,
-                "unit_price": 10,
-                "notes": "Less glued particle"
-            }
-        ]
-    }
-
-    post_response = app.test_client().post('/api/purchase_order', json=data)
-    get_response = app.test_client().get('/api/purchase_order?created_by=' + data['created_by'])
+def test_find_purchase_order_success_created_by(mock_data):
+    post_response = app.test_client().post('/api/purchase_order', json=mock_data)
+    get_response = app.test_client().get('/api/purchase_order?created_by=' + mock_data['created_by'])
 
     assert get_response.status_code == 200
     assert len(json.loads(get_response.data)) > 0
     assert post_response.json['po_header_id'] in str(get_response.data)
-    assert data['po_lines'][0]['item_name'] in str(get_response.json[0]['po_lines'])
-    assert data['po_lines'][0]['notes'] in str(get_response.json[0]['po_lines'])
-    assert data['po_lines'][1]['item_name'] in str(get_response.json[0]['po_lines'])
-    assert data['po_lines'][1]['notes'] in str(get_response.json[0]['po_lines'])
+    assert mock_data['po_lines'][0]['item_name'] in str(get_response.json[0]['po_lines'])
+    assert mock_data['po_lines'][0]['notes'] in str(get_response.json[0]['po_lines'])
+    assert mock_data['po_lines'][1]['item_name'] in str(get_response.json[0]['po_lines'])
+    assert mock_data['po_lines'][1]['notes'] in str(get_response.json[0]['po_lines'])
 
 
-def test_find_purchase_order_success_all():
-    data = {
-        "po_date": "2022-12-02",
-        "po_currency": "USD",
-        "vendor_name": "IKAE",
-        "vendor_email": "wellbert@ikae.com",
-        "created_by": "procurement-agent-02",
-        "po_lines": [
-            {
-                "item_name": "Plywood",
-                "quantity": 200,
-                "unit_price": 10,
-                "notes": "Fine sanding"
-            },
-            {
-                "item_name": "Top Table",
-                "quantity": 40,
-                "unit_price": 10,
-                "notes": "Less glued particle"
-            }
-        ]
-    }
-
+def test_find_purchase_order_success_all(mock_data):
     data2 = {
         "po_date": "2022-12-01",
         "po_currency": "USD",
@@ -223,7 +184,7 @@ def test_find_purchase_order_success_all():
         ]
     }
 
-    post_response = app.test_client().post('/api/purchase_order', json=data)
+    post_response = app.test_client().post('/api/purchase_order', json=mock_data)
     post_response2 = app.test_client().post('/api/purchase_order', json=data2)
     get_response = app.test_client().get('/api/purchase_order')
 
@@ -231,10 +192,10 @@ def test_find_purchase_order_success_all():
     assert len(json.loads(get_response.data)) > 1
     assert post_response.json['po_header_id'] in str(get_response.data)
     assert post_response2.json['po_header_id'] in str(get_response.data)
-    assert data['po_lines'][0]['item_name'] in str(get_response.data)
-    assert data['po_lines'][0]['notes'] in str(get_response.data)
-    assert data['po_lines'][1]['item_name'] in str(get_response.data)
-    assert data['po_lines'][1]['notes'] in str(get_response.data)
+    assert mock_data['po_lines'][0]['item_name'] in str(get_response.data)
+    assert mock_data['po_lines'][0]['notes'] in str(get_response.data)
+    assert mock_data['po_lines'][1]['item_name'] in str(get_response.data)
+    assert mock_data['po_lines'][1]['notes'] in str(get_response.data)
     assert data2['po_lines'][0]['item_name'] in str(get_response.data)
     assert data2['po_lines'][0]['notes'] in str(get_response.data)
     assert data2['po_lines'][1]['item_name'] in str(get_response.data)
