@@ -1,0 +1,30 @@
+### Create a purchase order
+POST {{BASE_URL}}/api/purchase_order
+Content-Type: application/json
+
+{
+  "po_date": "2022-12-01",
+  "po_currency": "USD",
+  "vendor_name": "WallMark",
+  "vendor_email": "alice@wallmark.com",
+  "created_by": "procurement-agent-01",
+  "po_lines": [
+    {
+      "item_name": "Apple",
+      "quantity": 280,
+      "unit_price": 1,
+      "notes": "Sweet red apple"
+    },
+    {
+      "item_name": "Avocado",
+      "quantity": 137,
+      "unit_price": 3,
+      "notes": "Australian avocado"
+    }
+  ]
+}
+
+### Get a purchase order
+GET {{BASE_URL}}/api/purchase_order
+    ?po_header_id=4b848c79-8b05-4097-b4a3-a57a7de8820d
+#    &created_by=<created_by>
