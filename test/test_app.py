@@ -1,6 +1,7 @@
 from app import app
 import json
 import pytest
+from app import PurchaseOrderException
 
 
 @pytest.fixture
@@ -165,3 +166,25 @@ def test_find_purchase_order_failed(param_name, param_value, expected_response, 
 
     assert get_response.status_code == expected_response
     assert len(json.loads(get_response.data)) == expected_length
+
+
+def test_index():
+    get_response = app.test_client().get('/')
+
+    assert get_response.status_code == 200
+    assert f'Hello, World' in str(get_response.data)
+
+
+def test_redirect():
+    get_response = app.test_client().get('/redirect/')
+    assert get_response.status_code == 302
+
+
+def test_exception():
+    with pytest.raises(PurchaseOrderException) as exc_info:
+        raise PurchaseOrderException('error message', 'error detail', None)
+
+
+def test_exception_dict():
+    mock_dict = {'error_message': 'error message', 'detail': 'error detail'}
+    assert mock_dict == PurchaseOrderException('error message', 'error detail', None).to_dict()
